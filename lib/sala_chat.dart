@@ -19,45 +19,56 @@ class SalaChat extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Lista de mensagens
-            StreamBuilder<List<Mensagem>>(
-              stream: MensagensStore.of(context).mensagens(sala.id),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
-                }
-                if (snapshot.hasData) {
-                  return ListView.builder(
-                    itemCount: snapshot.data!.length,
-                    itemBuilder: (context, index) {
-                      final mensagem = snapshot.data![index];
-
-                      return ListTile(
-                        leading: CircleAvatar(
-                          child: Text(mensagem.usuario[0]),
-                        ),
-                        title: Text(mensagem.texto),
-                        subtitle: Text(mensagem.data.toString()),
+            Expanded(
+              child: StreamBuilder<List<Mensagem>>(
+                stream: MensagensStore.of(context).mensagens(sala.id),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+                  if (snapshot.hasData) {
+                    final mensagens = snapshot.data;
+                    if (mensagens!.isNotEmpty) {
+                      return ListView.builder(
+                        itemCount: mensagens.length,
+                        itemBuilder: (context, index) {
+                          final mensagem = mensagens[index];
+                          return ListTile(
+                            leading: CircleAvatar(
+                              child: Text(mensagem.usuario[0]),
+                            ),
+                            title: Text(mensagem.texto),
+                            subtitle: Text(mensagem.data.toString()),
+                          );
+                        },
                       );
-                    },
+                    }
+                  }
+                  return const Center(
+                    child: Text('Nenhuma mensagem encontrada'),
                   );
-                }
-                return const Center(
-                  child: Text('Nenhuma mensagem encontrada'),
-                );
-              },
-            ),
-            // Input para enviar mensagem
-            TextField(
-              decoration: const InputDecoration(
-                hintText: 'Digite uma mensagem aqui!',
+                },
               ),
-              onChanged: (texto) {
-                MensagensStore.of(context).enviarMensagem(
-                  sala.id,
-                  texto,
-                );
-              },
+            ),
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Digite uma mensagem aqui!',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                ),
+                onChanged: (texto) {
+                  MensagensStore.of(context).enviarMensagem(
+                    sala.id,
+                    texto,
+                  );
+                },
+              ),
             ),
           ],
         ),

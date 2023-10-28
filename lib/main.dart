@@ -20,9 +20,10 @@ void main() {
         ChangeNotifierProvider(create: (_) => MensagensStore()),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Chat com salas',
         theme: ThemeData(
-          primarySwatch: Colors.blue,
+          primarySwatch: Colors.pink,
         ),
         home: Home(),
       ),
