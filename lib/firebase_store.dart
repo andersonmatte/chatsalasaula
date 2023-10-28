@@ -1,4 +1,5 @@
 import 'package:chatsalasaula/sala.dart';
+import 'package:chatsalasaula/usuario.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -8,7 +9,7 @@ class FirebaseStore {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  static Future<User?> signInWithEmailAndPassword(
+  static Future<UserCredential> signInWithEmailAndPassword(
       String email, String password) async {
     return await _auth.signInWithEmailAndPassword(
         email: email, password: password);
@@ -22,7 +23,7 @@ class FirebaseStore {
     return _firestore.collection('usuarios').doc(_auth.currentUser!.uid);
   }
 
-  static Future<void> salvarUsuario(UsuarioModel usuario) async {
+  static Future<void> salvarUsuario(Usuario usuario) async {
     await _firestore
         .collection('usuarios')
         .doc(usuario.id)
@@ -48,25 +49,35 @@ class FirebaseStore {
       usuarios: [],
     );
 
-    await _firestore.collection('salas').doc().set(sala.toMap());
+    await _firestore.collection('salas').doc().set(sala as Map<String, dynamic>);
   }
 
   static Future<void> entrarNaSala(String salaId) async {
-    final sala = _firestore.collection('salas').doc(salaId);
-    final usuarios = sala.get().data()['usuarios'] as List<String>;
-    usuarios.add(_auth.currentUser!.uid);
-    await sala.update({
-      'usuarios': usuarios,
-    });
+    final salaDococumento = _firestore.collection('salas').doc(salaId);
+    final salaSnapshot = await salaDococumento.get();
+    if (salaSnapshot.exists) {
+      final usuarios = List<String>.from(salaSnapshot.data()!['usuarios']);
+      usuarios.add(_auth.currentUser!.uid);
+      await salaDococumento.update({
+        'usuarios': usuarios,
+      });
+    } else {
+      print('A sala não foi encontrada.');
+    }
   }
 
   static Future<void> sairDaSala(String salaId) async {
-    final sala = _firestore.collection('salas').doc(salaId);
-    final usuarios = sala.get().data()['usuarios'] as List<String>;
-    usuarios.remove(_auth.currentUser!.uid);
-    await sala.update({
-      'usuarios': usuarios,
-    });
+    final salaDococumento = _firestore.collection('salas').doc(salaId);
+    final salaSnapshot = await salaDococumento.get();
+    if (salaSnapshot.exists) {
+      final usuarios = List<String>.from(salaSnapshot.data()!['usuarios']);
+      usuarios.remove(_auth.currentUser!.uid);
+      await salaDococumento.update({
+        'usuarios': usuarios,
+      });
+    } else {
+      print('A sala não foi encontrada.');
+    }
   }
 
   static Future<List<Mensagem>> getMensagens(String salaId) async {
@@ -89,6 +100,7 @@ class FirebaseStore {
         .collection('salas')
         .doc(salaId)
         .collection('mensagens')
-        .add(mensagem.toMap());
+        .add(mensagem as Map<String, dynamic>);
   }
+
 }
